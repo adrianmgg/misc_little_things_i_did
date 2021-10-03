@@ -109,6 +109,7 @@ function _checktype_intersection_factory<
 	}
 }
 
+// TODO should add a stricter 'has ONLY these keys' version of this
 function _checktype_hasallkeys_factory<
 	IDK extends {
 		required?: {
@@ -181,5 +182,20 @@ function _checktype_tuple_factory<
 			if(!checkFuncs[i](x[i])) return false;
 		}
 		return true;
+	}
+}
+
+function _checktype_strictlyoneof_factory<
+	CheckFuncs extends ((a: unknown) => boolean)[],
+	TypeToCheck = UnionOf<{
+		[K in keyof CheckFuncs]: CheckFuncs[K] extends (c: unknown) => boolean ? GuardType<CheckFuncs[K]> : never;
+	}>
+> (...checkFuncs: CheckFuncs): (a: unknown) => a is TypeToCheck {
+	return (x: unknown): x is TypeToCheck => {
+		let numMatches = 0;
+		for(const checkFunc of checkFuncs) {
+			if(checkFunc(x)) numMatches++;
+		}
+		return numMatches === 1;
 	}
 }
